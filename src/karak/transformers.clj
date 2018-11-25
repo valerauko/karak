@@ -110,16 +110,20 @@
 
 (defn code-block
   [text]
-  (let [matches (re-seq #"(?ms)(.*?)(?:(?:^```\w*$)(.+?)(?:^```$))?()$" text)]
+  (let [matches (re-seq #"(?ms)(.*?)(?:(?:^```\w*$)(.+?)(?:^```$))?()$"
+                        (string/replace text #"\r" ""))]
     (wrap (fn [[multiline-code]]
             [[:meta "<code><pre>"]
-             [:raw (string/trim multiline-code)]
-             [:meta "</pre></code"]])
+             [:raw (-> multiline-code
+                       string/trim
+                       escape-raw
+                       (string/replace #"\n" "<br />"))]
+             [:meta "</pre></code>"]])
           matches)))
 
 (defn paragraph
   [text]
-  (let [matches (re-seq #"(?sm)(?<=\A|\n\n)(?:()(.+?)())(?=\z|\n\n)"
+  (let [matches (re-seq #"(?ms)(?<=\A|\n\n)(?:()(.+?)())(?=\z|\n\n)"
                         (string/replace text #"\r" ""))] ; get rid of \r jic
     (wrap (fn [[paragraph-text]]
             [[:meta "<p>"]
