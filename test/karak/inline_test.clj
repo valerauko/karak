@@ -1,6 +1,6 @@
-(ns karak.transformers-test
+(ns karak.inline-test
   (:require [clojure.test :refer :all]
-            [clojure.string :refer [join]]
+            [karak.helpers :refer [naive-flattener]]
             [karak.transformers :refer :all]))
 
 (defn user-finder [acct]
@@ -10,10 +10,6 @@
 
 (defn hashtag-finder [tag]
   {:uri (str "https://example.com/hashtags/" tag)})
-
-(defn naive-flattener
-  [result-vec]
-  (join (map second result-vec)))
 
 (deftest basics-test
   (testing "One asterisk means italic"
