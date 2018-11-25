@@ -35,3 +35,20 @@
            (naive-flattener (code "hoge `f<ug>a piyo`"))))
     (is (= "<code>hoge f&lt;ug&gt;a piyo</code>"
            (naive-flattener (code "`hoge f<ug>a piyo`"))))))
+
+(deftest link-test
+  (testing "[title](link) gets converted to a named link"
+    (is (= "hoge <a href=\"https://piyo\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">fuga</a> puyo"
+           (naive-flattener (named-link "hoge [fuga](https://piyo) puyo"))))
+    (is (= "<a href=\"https://piyo\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">hoge fuga</a> puyo"
+           (naive-flattener (named-link "[hoge fuga](https://piyo) puyo"))))
+    (is (= "hoge <a href=\"https://piyo\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">fuga puyo</a>"
+           (naive-flattener (named-link "hoge [fuga puyo](https://piyo)"))))
+    (is (= "<a href=\"https://piyo\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">hoge fuga puyo</a>"
+           (naive-flattener (named-link "[hoge fuga puyo](https://piyo)"))))
+    (is (= "hoge [fuga](piyo) puyo <a href=\"ftp://bar\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">foo</a> baz"
+           (naive-flattener (named-link "hoge [fuga](piyo) puyo [foo](ftp://bar) baz")))
+        "Requries the presence of a protocol")
+    (is (= "<a href=\"ftp://bar\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">http&#58;//foo.com</a> asd"
+           (naive-flattener (named-link "[http://foo.com](ftp://bar) asd")))
+        "Doesn't allow nesting")))
