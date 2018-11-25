@@ -90,7 +90,7 @@
                 [[:mention (str "<a href=\"" (:uri user) "\" "
                                 "rel=\"noopener\" target=\"_blank\" "
                                 "class=\"status-link mention\">")
-                           (:uri user)]
+                           user]
                  ; FIXME: the @ is underlined
                  [:raw (str "<span>" (escape-raw acct) "</span")]
                  [:meta "</a>"]]
@@ -101,11 +101,12 @@
   [text]
   (let [matches (re-seq #"(.*?\pZ?)(?:(?<=^|\pZ)#([\pL\pN_]+))?(.*?(?=\pZ#|$))" text)]
     (wrap (fn [[tag]]
-            [[:hashtag (str "<a href=\"" (-> tag lookup-hashtag :uri) "\" "
-                            "class=\"status-link\" rel=\"noopener\" target=\"_blank\""
-                            ">") tag]
-             [:raw (str "#" (escape-raw tag))]
-             [:meta (str "</a>")]])
+            (let [hashtag (lookup-hashtag tag)]
+              [[:hashtag (str "<a href=\"" (:uri hashtag) "\" "
+                              "class=\"status-link\" rel=\"noopener\" target=\"_blank\""
+                              ">") hashtag]
+               [:raw (str "#" (escape-raw tag))]
+               [:meta (str "</a>")]]))
           matches)))
 
 (defn code-block
@@ -129,6 +130,7 @@
             [[:meta "<p>"]
              [:text (-> paragraph-text
                         string/trim
+                        escape-raw
                         (string/replace #"\n" "<br />"))]
              [:meta "</p>"]])
           matches)))
