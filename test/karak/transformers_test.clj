@@ -61,3 +61,26 @@
            (naive-flattener (plain-link "foo ftp://example.com"))))
     (is (= "<a href=\"ftp://example.com\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">example.com</a> foo"
            (naive-flattener (plain-link "ftp://example.com foo"))))))
+
+(deftest mention-test
+  (binding [lookup-user (fn [acct]
+                          (let [[[_ name domain]] (re-seq #"@(?:([a-z0-9][a-z0-9_.-]+)(?:@((?:[a-z0-9-_]+\.)*[a-z0-9]+))?)" acct)]
+                            {:uri (str "https://" (or domain "example.com") "/users/" name)}))]
+    (testing "Converts @-mentions to links"
+      (is (= "<a href=\"https://fuga.jp/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a>"
+             (naive-flattener (mention "@hoge@fuga.jp"))))
+      (is (= "foo <a href=\"https://fuga.jp/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a>"
+             (naive-flattener (mention "foo @hoge@fuga.jp"))))
+      (is (= "<a href=\"https://fuga.jp/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a> bar"
+             (naive-flattener (mention "@hoge@fuga.jp bar"))))
+      (is (= "foo <a href=\"https://fuga.jp/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a> bar"
+             (naive-flattener (mention "foo @hoge@fuga.jp bar")))))
+    (testing "Can handle domain-less mentions too"
+      (is (= "<a href=\"https://example.com/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge</span</a>"
+             (naive-flattener (mention "@hoge"))))))
+  (testing "The URI lookup function used can be dynamically rebound"
+    (binding [lookup-user (constantly {:uri "https://example.com"})]
+      (is (= "<a href=\"https://example.com\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge</span</a>"
+             (naive-flattener (mention "@hoge"))))
+      (is (= "<a href=\"https://example.com\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a>"
+             (naive-flattener (mention "@hoge@fuga.jp")))))))
