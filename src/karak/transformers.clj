@@ -5,6 +5,7 @@
 ;       the css classes could be passed as parameters too.
 ;       maybe an options hash?
 (defn ^:dynamic lookup-user [_] nil)
+(defn ^:dynamic lookup-hashtag [_] nil)
 
 (defn escape-raw
   [input]
@@ -100,8 +101,8 @@
   [text]
   (let [matches (re-seq #"(.*?\pZ?)(?:(?<=^|\pZ)#([\pL\pN_]+))?(.*?(?=\pZ#|$))" text)]
     (wrap (fn [[tag]]
-            [[:hashtag (str "<a href=\"" tag "\" "
-                            "class=\"status-link\" rel=\"noopener\" target=\"_blank\" "
+            [[:hashtag (str "<a href=\"" (-> tag lookup-hashtag :uri) "\" "
+                            "class=\"status-link\" rel=\"noopener\" target=\"_blank\""
                             ">") tag]
              [:raw (str "#" (escape-raw tag))]
              [:meta (str "</a>")]])

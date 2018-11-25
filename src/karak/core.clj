@@ -22,8 +22,9 @@
       transformers)))
 
 (defn process
-  [input lookup-fn]
-  (binding [karak.transformers/lookup-user lookup-fn]
+  [input {:keys [user-lookup hashtag-lookup]}]
+  (binding [karak.transformers/lookup-user user-lookup
+            karak.transformers/lookup-hashtag hashtag-lookup]
     (reduce
      (fn [{:keys [length text links mentions hashtags]} [type match meta]]
        {:text (str text match)

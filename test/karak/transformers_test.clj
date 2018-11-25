@@ -3,6 +3,14 @@
             [clojure.string :refer [join]]
             [karak.transformers :refer :all]))
 
+(defn user-finder [acct]
+  (let [[[_ name domain]] (re-seq #"@(?:([a-z0-9][a-z0-9_.-]+)(?:@((?:[a-z0-9-_]+\.)*[a-z0-9]+))?)"
+                                  acct)]
+    {:uri (str "https://" (or domain "example.com") "/users/" name)}))
+
+(defn hashtag-finder [tag]
+  {:uri (str "https://example.com/hashtags/" tag)})
+
 (defn naive-flattener
   [result-vec]
   (join (map second result-vec)))
@@ -63,9 +71,7 @@
            (naive-flattener (plain-link "ftp://example.com foo"))))))
 
 (deftest mention-test
-  (binding [lookup-user (fn [acct]
-                          (let [[[_ name domain]] (re-seq #"@(?:([a-z0-9][a-z0-9_.-]+)(?:@((?:[a-z0-9-_]+\.)*[a-z0-9]+))?)" acct)]
-                            {:uri (str "https://" (or domain "example.com") "/users/" name)}))]
+  (binding [lookup-user user-finder]
     (testing "Converts @-mentions to links"
       (is (= "<a href=\"https://fuga.jp/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a>"
              (naive-flattener (mention "@hoge@fuga.jp"))))
@@ -84,3 +90,15 @@
              (naive-flattener (mention "@hoge"))))
       (is (= "<a href=\"https://example.com\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a>"
              (naive-flattener (mention "@hoge@fuga.jp")))))))
+
+(deftest hashtag-test
+  (binding [lookup-hashtag hashtag-finder]
+    (testing "Converts #-tags to links"
+      (is (= "<a href=\"https://example.com/hashtags/hoge\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">#hoge</a>"
+             (naive-flattener (hashtag "#hoge"))))
+      (is (= "foo <a href=\"https://example.com/hashtags/hoge\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">#hoge</a>"
+             (naive-flattener (hashtag "foo #hoge"))))
+      (is (= "<a href=\"https://example.com/hashtags/hoge\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">#hoge</a> bar"
+             (naive-flattener (hashtag "#hoge bar"))))
+      (is (= "foo <a href=\"https://example.com/hashtags/hoge\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">#hoge</a> bar"
+             (naive-flattener (hashtag "foo #hoge bar")))))))
