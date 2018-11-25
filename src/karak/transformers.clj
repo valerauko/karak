@@ -5,6 +5,7 @@
 ;       the css classes could be passed as parameters too.
 ;       maybe an options hash?
 (defn ^:dynamic lookup-user [_] nil)
+(defn ^:dynamic lookup-hashtag [_] nil)
 
 (defn escape-raw
   [input]
@@ -89,7 +90,7 @@
                 [[:mention (str "<a href=\"" (:uri user) "\" "
                                 "rel=\"noopener\" target=\"_blank\" "
                                 "class=\"status-link mention\">")
-                           (:uri user)]
+                           user]
                  ; FIXME: the @ is underlined
                  [:raw (str "<span>" (escape-raw acct) "</span")]
                  [:meta "</a>"]]
@@ -100,30 +101,36 @@
   [text]
   (let [matches (re-seq #"(.*?\pZ?)(?:(?<=^|\pZ)#([\pL\pN_]+))?(.*?(?=\pZ#|$))" text)]
     (wrap (fn [[tag]]
-            [[:hashtag (str "<a href=\"" tag "\" "
-                            "class=\"status-link\" rel=\"noopener\" target=\"_blank\" "
-                            ">") tag]
-             [:raw (str "#" (escape-raw tag))]
-             [:meta (str "</a>")]])
+            (let [hashtag (lookup-hashtag tag)]
+              [[:hashtag (str "<a href=\"" (:uri hashtag) "\" "
+                              "class=\"status-link\" rel=\"noopener\" target=\"_blank\""
+                              ">") hashtag]
+               [:raw (str "#" (escape-raw tag))]
+               [:meta (str "</a>")]]))
           matches)))
 
 (defn code-block
   [text]
-  (let [matches (re-seq #"(?ms)(.*?)(?:(?:^```\w*$)(.+?)(?:^```$))?()$" text)]
+  (let [matches (re-seq #"(?ms)(.*?)(?:(?:^```\w*$)(.+?)(?:^```$))?()$"
+                        (string/replace text #"\r" ""))]
     (wrap (fn [[multiline-code]]
             [[:meta "<code><pre>"]
-             [:raw (string/trim multiline-code)]
-             [:meta "</pre></code"]])
+             [:raw (-> multiline-code
+                       string/trim
+                       escape-raw
+                       (string/replace #"\n" "<br />"))]
+             [:meta "</pre></code>"]])
           matches)))
 
 (defn paragraph
   [text]
-  (let [matches (re-seq #"(?sm)(?<=\A|\n\n)(?:()(.+?)())(?=\z|\n\n)"
+  (let [matches (re-seq #"(?ms)(?<=\A|\n\n)(?:()(.+?)())(?=\z|\n\n)"
                         (string/replace text #"\r" ""))] ; get rid of \r jic
     (wrap (fn [[paragraph-text]]
             [[:meta "<p>"]
              [:text (-> paragraph-text
                         string/trim
+                        escape-raw
                         (string/replace #"\n" "<br />"))]
              [:meta "</p>"]])
           matches)))

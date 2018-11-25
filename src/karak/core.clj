@@ -13,17 +13,33 @@
     arr))
 
 (defn to-tagged-vec
-  ([text]
-    (to-tagged-vec text defaults))
-  ([text transformers]
-    (reduce
-      one-transform
-      [[:text text]]
-      transformers)))
+  [text transformers]
+  (reduce
+    one-transform
+    [[:text text]]
+    transformers))
 
 (defn process
-  [input lookup-fn]
-  (binding [karak.transformers/lookup-user lookup-fn]
+  "Converts the markdown in `input` (string) using the given options:
+   |     option     | description
+   |----------------|-------------
+   | user-lookup    | Function to search users by @name(@domain). Should return
+                        a map with :uri in it.
+   | hashtag-lookup | Function to search hashtags. Should return a map with :uri
+                        in it.
+   | transformers   | (optional) Vector of transformer functions (presumably
+                        from karak.transformers). Defaults to k.t/defaults
+
+   Returns a map of the following format:
+   :text     The actual processed text
+   :length   The total length of the visible bits of the text (excludes tags etc)
+   :mentions Collection of mentions
+   :hashtags Collection of hashtags
+   :links    Collection of other links"
+  [input {:keys [user-lookup hashtag-lookup transformers]
+          :or {transformers defaults}}]
+  (binding [karak.transformers/lookup-user user-lookup
+            karak.transformers/lookup-hashtag hashtag-lookup]
     (reduce
      (fn [{:keys [length text links mentions hashtags]} [type match meta]]
        {:text (str text match)
@@ -40,4 +56,4 @@
                     :hashtag (conj hashtags meta)
                     hashtags)})
      {:text "" :length 0 :links #{} :mentions #{} :hashtags #{}}
-     (to-tagged-vec input))))
+     (to-tagged-vec input transformers))))
