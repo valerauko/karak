@@ -25,4 +25,13 @@
     (is (= "hoge <strong>fuga piyo</strong>"
            (naive-flattener (bold "hoge **fuga piyo**"))))
     (is (= "<strong>hoge fuga piyo</strong>"
-           (naive-flattener (bold "**hoge fuga piyo**"))))))
+           (naive-flattener (bold "**hoge fuga piyo**")))))
+  (testing "Backtick means code"
+    (is (= "hoge <code>f&lt;ug&gt;a</code> piyo"
+           (naive-flattener (code "hoge `f<ug>a` piyo"))))
+    (is (= "<code>hoge f&lt;ug&gt;a</code> piyo"
+           (naive-flattener (code "`hoge f<ug>a` piyo"))))
+    (is (= "hoge <code>f&lt;ug&gt;a piyo</code>"
+           (naive-flattener (code "hoge `f<ug>a piyo`"))))
+    (is (= "<code>hoge f&lt;ug&gt;a piyo</code>"
+           (naive-flattener (code "`hoge f<ug>a piyo`"))))))
