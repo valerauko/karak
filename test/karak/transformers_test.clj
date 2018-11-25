@@ -51,4 +51,13 @@
         "Requries the presence of a protocol")
     (is (= "<a href=\"ftp://bar\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">http&#58;//foo.com</a> asd"
            (naive-flattener (named-link "[http://foo.com](ftp://bar) asd")))
-        "Doesn't allow nesting")))
+        "Doesn't allow nesting"))
+  (testing "Links with a protocol get linkified"
+    (is (= "<a href=\"ftp://example.com\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">example.com</a>"
+           (naive-flattener (plain-link "ftp://example.com"))))
+    (is (= "foo <a href=\"ftp://example.com\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">example.com</a> bar"
+           (naive-flattener (plain-link "foo ftp://example.com bar"))))
+    (is (= "foo <a href=\"ftp://example.com\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">example.com</a>"
+           (naive-flattener (plain-link "foo ftp://example.com"))))
+    (is (= "<a href=\"ftp://example.com\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">example.com</a> foo"
+           (naive-flattener (plain-link "ftp://example.com foo"))))))
