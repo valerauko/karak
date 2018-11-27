@@ -2,22 +2,23 @@
   (:require [karak.transformers :refer [defaults]]))
 
 (defn one-transform
-  [arr trf]
+  [arr trf lookups]
   (reduce
     (fn [aggr [tag text :as match]]
       (concat aggr
               (if (= tag :text)
-                (trf text)
+                (trf text lookups)
                 [match])))
     []
     arr))
 
 (defn to-tagged-vec
-  [text transformers]
-  (reduce
-    one-transform
-    [[:text text]]
-    transformers))
+  [text {:keys [transformers] :or {transformers defaults} :as options}]
+  (let [lookups (dissoc options :transformers)]
+    (reduce
+      (fn [arr trf] (one-transform arr trf lookups))
+      [[:text text]]
+      transformers)))
 
 (defn process
   "Converts the markdown in `input` (string) using the given options:
@@ -36,24 +37,21 @@
    :mentions Collection of mentions
    :hashtags Collection of hashtags
    :links    Collection of other links"
-  [input {:keys [user-lookup hashtag-lookup transformers]
-          :or {transformers defaults}}]
-  (binding [karak.transformers/lookup-user user-lookup
-            karak.transformers/lookup-hashtag hashtag-lookup]
-    (reduce
-     (fn [{:keys [length text links mentions hashtags]} [type match meta]]
-       {:text (str text match)
-        :length (case type
-                  (:raw :text) (+ length (count match))
-                  length)
-        :links (case type
-                 :link (conj links meta)
-                 links)
-        :mentions (case type
-                    :mention (conj mentions meta)
-                    mentions)
-        :hashtags (case type
-                    :hashtag (conj hashtags meta)
-                    hashtags)})
-     {:text "" :length 0 :links #{} :mentions #{} :hashtags #{}}
-     (to-tagged-vec input transformers))))
+  [input options]
+  (reduce
+    (fn [{:keys [length text links mentions hashtags]} [type match meta]]
+      {:text (str text match)
+       :length (case type
+                 (:raw :text) (+ length (count match))
+                 length)
+       :links (case type
+                :link (conj links meta)
+                links)
+       :mentions (case type
+                   :mention (conj mentions meta)
+                   mentions)
+       :hashtags (case type
+                   :hashtag (conj hashtags meta)
+                   hashtags)})
+    {:text "" :length 0 :links #{} :mentions #{} :hashtags #{}}
+    (to-tagged-vec input options)))

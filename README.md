@@ -4,7 +4,7 @@ Markdown formatting to use with ActivityPub federation. The CSS classes are curr
 
 ## Installation
 ```
-[social.kitsune/karak "0.1.0"]
+[social.kitsune/karak "0.1.1"]
 ```
 
 ## License

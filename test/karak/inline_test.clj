@@ -67,34 +67,32 @@
            (naive-flattener (plain-link "ftp://example.com foo"))))))
 
 (deftest mention-test
-  (binding [lookup-user user-finder]
-    (testing "Converts @-mentions to links"
-      (is (= "<a href=\"https://fuga.jp/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a>"
-             (naive-flattener (mention "@hoge@fuga.jp"))))
-      (is (= "foo <a href=\"https://fuga.jp/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a>"
-             (naive-flattener (mention "foo @hoge@fuga.jp"))))
-      (is (= "<a href=\"https://fuga.jp/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a> bar"
-             (naive-flattener (mention "@hoge@fuga.jp bar"))))
-      (is (= "foo <a href=\"https://fuga.jp/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a> bar"
-             (naive-flattener (mention "foo @hoge@fuga.jp bar")))))
-    (testing "Can handle domain-less mentions too"
-      (is (= "<a href=\"https://example.com/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge</span</a>"
-             (naive-flattener (mention "@hoge"))))))
-  (testing "The URI lookup function used can be dynamically rebound"
-    (binding [lookup-user (constantly {:uri "https://example.com"})]
+  (testing "Converts @-mentions to links"
+    (is (= "<a href=\"https://fuga.jp/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a>"
+           (naive-flattener (mention "@hoge@fuga.jp" {:user-lookup user-finder}))))
+    (is (= "foo <a href=\"https://fuga.jp/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a>"
+           (naive-flattener (mention "foo @hoge@fuga.jp" {:user-lookup user-finder}))))
+    (is (= "<a href=\"https://fuga.jp/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a> bar"
+           (naive-flattener (mention "@hoge@fuga.jp bar" {:user-lookup user-finder}))))
+    (is (= "foo <a href=\"https://fuga.jp/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a> bar"
+           (naive-flattener (mention "foo @hoge@fuga.jp bar" {:user-lookup user-finder})))))
+  (testing "Can handle domain-less mentions too"
+    (is (= "<a href=\"https://example.com/users/hoge\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge</span</a>"
+           (naive-flattener (mention "@hoge" {:user-lookup user-finder})))))
+  (testing "The URI lookup function used can be passed in"
+    (let [lookup-user (constantly {:uri "https://example.com"})]
       (is (= "<a href=\"https://example.com\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge</span</a>"
-             (naive-flattener (mention "@hoge"))))
+             (naive-flattener (mention "@hoge" {:user-lookup lookup-user}))))
       (is (= "<a href=\"https://example.com\" rel=\"noopener\" target=\"_blank\" class=\"status-link mention\"><span>@hoge@fuga.jp</span</a>"
-             (naive-flattener (mention "@hoge@fuga.jp")))))))
+             (naive-flattener (mention "@hoge@fuga.jp" {:user-lookup lookup-user})))))))
 
 (deftest hashtag-test
-  (binding [lookup-hashtag hashtag-finder]
-    (testing "Converts #-tags to links"
-      (is (= "<a href=\"https://example.com/hashtags/hoge\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">#hoge</a>"
-             (naive-flattener (hashtag "#hoge"))))
-      (is (= "foo <a href=\"https://example.com/hashtags/hoge\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">#hoge</a>"
-             (naive-flattener (hashtag "foo #hoge"))))
-      (is (= "<a href=\"https://example.com/hashtags/hoge\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">#hoge</a> bar"
-             (naive-flattener (hashtag "#hoge bar"))))
-      (is (= "foo <a href=\"https://example.com/hashtags/hoge\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">#hoge</a> bar"
-             (naive-flattener (hashtag "foo #hoge bar")))))))
+  (testing "Converts #-tags to links"
+    (is (= "<a href=\"https://example.com/hashtags/hoge\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">#hoge</a>"
+           (naive-flattener (hashtag "#hoge" {:hashtag-lookup hashtag-finder}))))
+    (is (= "foo <a href=\"https://example.com/hashtags/hoge\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">#hoge</a>"
+           (naive-flattener (hashtag "foo #hoge" {:hashtag-lookup hashtag-finder}))))
+    (is (= "<a href=\"https://example.com/hashtags/hoge\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">#hoge</a> bar"
+           (naive-flattener (hashtag "#hoge bar" {:hashtag-lookup hashtag-finder}))))
+    (is (= "foo <a href=\"https://example.com/hashtags/hoge\" class=\"status-link\" rel=\"noopener\" target=\"_blank\">#hoge</a> bar"
+           (naive-flattener (hashtag "foo #hoge bar" {:hashtag-lookup hashtag-finder}))))))

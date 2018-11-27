@@ -1,11 +1,7 @@
 (ns karak.transformers
   (:require [clojure.string :as string]))
 
-; TODO: use plain parameter passing instead of this rebinding magic
-;       the css classes could be passed as parameters too.
-;       maybe an options hash?
-(defn ^:dynamic lookup-user [_] nil)
-(defn ^:dynamic lookup-hashtag [_] nil)
+; TODO: the css classes could be passed as parameters too.
 
 (defn escape-raw
   [input]
@@ -45,19 +41,19 @@
             matches))))
 
 (defn italic
-  [text]
+  [text & _]
   (inline text #"\*" "em"))
 
 (defn bold
-  [text]
+  [text & _]
   (inline text #"\*\*" "strong"))
 
 (defn code
-  [text]
+  [text & _]
   (inline text #"`" "code" :raw))
 
 (defn named-link
-  [text]
+  [text & _]
   (let [matches (re-seq #"(.*?)(?:\[([^\]]+)\]\(([a-z]+://[^\pZ)\"]+)\))?(\[?.*?(?=\[|$))" text)]
     (wrap (fn [[title url]]
             [[:link (str "<a href=\"" url "\" "
@@ -69,7 +65,7 @@
           matches)))
 
 (defn plain-link
-  [text]
+  [text & _]
   (let [matches (re-seq #"(.*?\pZ?)((?<=^|\pZ)(?:[a-z]+://)([^\pZ\"]+)(?=[\pZ\"]|$))?(.*?(?=\pZ(?:https?|ftp)|$))" text)]
     (wrap (fn [[full no-scheme]]
             [[:link (str "<a href=\"" full "\" "
@@ -82,11 +78,11 @@
           matches)))
 
 (defn mention
-  [text]
-  (let [matches (re-seq #"(.*?\pZ?)(?:(?<=^|\pZ)@(?:([a-z0-9][a-z0-9_.-]+)(?:@((?:[a-z0-9-_]+\.)*[a-z0-9]+))?))?(.*?(?=\pZ@|$))" text)]
+  [text {:keys [user-lookup]}]
+  (let [matches (re-seq #"(.*?\pZ?)(?:(?<=^|\pZ)@(?:([a-z0-9][a-z0-9_.-]+)(?:@((?:[a-z0-9-& _]+\.)*[a-z0-9]+))?))?(.*?(?=\pZ@|$))" text)]
     (wrap (fn [[name host]]
             (let [acct (str "@" name (if host (str "@" host)))]
-              (if-let [user (lookup-user acct)]
+              (if-let [user (user-lookup acct)]
                 [[:mention (str "<a href=\"" (:uri user) "\" "
                                 "rel=\"noopener\" target=\"_blank\" "
                                 "class=\"status-link mention\">")
@@ -98,10 +94,10 @@
           matches)))
 
 (defn hashtag
-  [text]
+  [text {:keys [hashtag-lookup]}]
   (let [matches (re-seq #"(.*?\pZ?)(?:(?<=^|\pZ)#([\pL\pN_]+))?(.*?(?=\pZ#|$))" text)]
     (wrap (fn [[tag]]
-            (let [hashtag (lookup-hashtag tag)]
+            (let [hashtag (hashtag-lookup tag)]
               [[:hashtag (str "<a href=\"" (:uri hashtag) "\" "
                               "class=\"status-link\" rel=\"noopener\" target=\"_blank\""
                               ">") hashtag]
@@ -110,7 +106,7 @@
           matches)))
 
 (defn code-block
-  [text]
+  [text & _]
   (let [matches (re-seq #"(?ms)(.*?)(?:(?:^```\w*$)(.+?)(?:^```$))?()$"
                         (string/replace text #"\r" ""))]
     (wrap (fn [[multiline-code]]
@@ -123,7 +119,7 @@
           matches)))
 
 (defn paragraph
-  [text]
+  [text & _]
   (let [matches (re-seq #"(?ms)(?<=\A|\n\n)(?:()(.+?)())(?=\z|\n\n)"
                         (string/replace text #"\r" ""))] ; get rid of \r jic
     (wrap (fn [[paragraph-text]]
