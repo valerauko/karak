@@ -1,4 +1,4 @@
-(defproject social.kitsune/karak "0.1.1"
+(defproject social.kitsune/karak "0.1.2"
   :description "Markdown formatting for ActivityPub federation"
   :url "https://kitsune.social"
   :license {:name "Eclipse Public License"

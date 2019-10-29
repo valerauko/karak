@@ -1,10 +1,10 @@
-# Karak [![Build Status](https://travis-ci.com/valerauko/karak.svg?branch=master)](https://travis-ci.com/valerauko/karak)[![Clojars Project](https://img.shields.io/clojars/v/social.kitsune/karak.svg)](https://clojars.org/social.kitsune/karak)
+# Karak [![Build Status](https://travis-ci.com/valerauko/karak.svg?branch=master)](https://travis-ci.com/valerauko/karak) [![Clojars Project](https://img.shields.io/clojars/v/social.kitsune/karak.svg)](https://clojars.org/social.kitsune/karak)
 
 Markdown formatting to use with ActivityPub federation. The CSS classes are currently hardcoded to those of [Mastodon](http://github.com/tootsuite/mastodon).
 
 ## Installation
 ```
-[social.kitsune/karak "0.1.1"]
+[social.kitsune/karak "0.1.2"]
 ```
 
 ## License
